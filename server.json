@@ -3,7 +3,7 @@
   "name": "io.github.MKirovBG/scribefy-mcp",
   "title": "Scribefy",
   "description": "Search YouTube, get video metadata, and extract timestamped transcripts for AI workflows.",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "repository": {
     "url": "https://github.com/MKirovBG/scribefy-mcp",
     "source": "github"
@@ -14,7 +14,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "scribefy-mcp",
-      "version": "0.3.3",
+      "version": "0.3.4",
       "transport": {
         "type": "stdio"
       },
