@@ -1,0 +1,55 @@
+{
+  "name": "scribefy-mcp",
+  "mcpName": "io.github.MKirovBG/scribefy-mcp",
+  "version": "0.3.3",
+  "description": "MCP server for Scribefy — search YouTube, read video metadata, and extract timestamped transcripts from Claude Desktop, Cursor, Windsurf, and any MCP client.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Scribefy",
+  "homepage": "https://scribefy.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MKirovBG/scribefy-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MKirovBG/scribefy-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "youtube",
+    "transcript",
+    "claude",
+    "cursor",
+    "windsurf",
+    "ai"
+  ],
+  "main": "dist/index.js",
+  "bin": {
+    "scribefy-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node -e \"require('fs').chmodSync('dist/index.js', 0o755)\"",
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build",
+    "version": "node scripts/sync-version.mjs && git add server.json"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3"
+  }
+}

@@ -1,0 +1,101 @@
+# Publish — ships scribefy-mcp to npm AND (re-)lists it on the official MCP
+# registry, OIDC end-to-end (no stored tokens, no local CLI, no device login).
+# Triggered by pushing a `v*` tag.
+#
+# Release flow:
+#   1. Bump the version: `npm version patch` (or minor / major / x.y.z). The
+#      `version` hook (scripts/sync-version.mjs) syncs server.json's two version
+#      fields, then npm commits + tags `vX.Y.Z`.
+#   2. `git push --follow-tags` → this workflow publishes npm, waits for it to go
+#      live, then publishes the registry entry against it.
+#
+# One-time setup (no secrets in this repo):
+#   - npm: OIDC trusted publishing. npmjs.com → scribefy-mcp → Settings →
+#     Trusted Publisher → repo MKirovBG/scribefy-mcp, workflow publish-mcp.yml.
+#   - MCP registry: `mcp-publisher login github-oidc` uses the GitHub OIDC token;
+#     the token's repository_owner (MKirovBG) matches the server.json namespace
+#     io.github.MKirovBG (case-sensitive).
+
+name: Publish
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write # for BOTH npm trusted publishing and mcp-publisher OIDC
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: publish to npm + MCP registry
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Upgrade npm (OIDC trusted-publishing support)
+        run: npm install -g npm@latest
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+
+      - name: Verify versions agree
+        run: |
+          PKG_VER="$(node -p "require('./package.json').version")"
+          SRV_VER="$(node -p "require('./server.json').version")"
+          SRV_PKG_VER="$(node -p "require('./server.json').packages[0].version")"
+          echo "package.json=$PKG_VER  server.json=$SRV_VER  server.json.packages[0]=$SRV_PKG_VER"
+          if [ "$PKG_VER" != "$SRV_VER" ] || [ "$PKG_VER" != "$SRV_PKG_VER" ]; then
+            echo "::error::Version mismatch — sync package.json and server.json"; exit 1
+          fi
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            TAG_VER="${GITHUB_REF_NAME#v}"
+            if [ "$TAG_VER" != "$PKG_VER" ]; then
+              echo "::error::Tag ${GITHUB_REF_NAME} != package version ${PKG_VER}"; exit 1
+            fi
+          fi
+
+      - name: Publish to npm (OIDC trusted publishing; idempotent)
+        run: |
+          PKG_VER="$(node -p "require('./package.json').version")"
+          if npm view "scribefy-mcp@${PKG_VER}" version >/dev/null 2>&1; then
+            echo "scribefy-mcp@${PKG_VER} already on npm — skipping npm publish."
+          else
+            npm publish --provenance --access public
+          fi
+
+      - name: Wait for npm to serve the new version
+        run: |
+          PKG_VER="$(node -p "require('./package.json').version")"
+          for i in $(seq 1 30); do
+            if npm view "scribefy-mcp@${PKG_VER}" version >/dev/null 2>&1; then
+              echo "scribefy-mcp@${PKG_VER} is live on npm."; exit 0
+            fi
+            echo "waiting for npm to serve ${PKG_VER} (attempt ${i})…"; sleep 5
+          done
+          echo "::error::scribefy-mcp@${PKG_VER} never appeared on npm after ~150s"; exit 1
+
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Log in to the MCP registry via GitHub OIDC
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish to the MCP registry
+        run: ./mcp-publisher publish
