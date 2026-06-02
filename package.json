@@ -1,7 +1,7 @@
 {
   "name": "scribefy-mcp",
   "mcpName": "io.github.MKirovBG/scribefy-mcp",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "MCP server for Scribefy — search YouTube, read video metadata, and extract timestamped transcripts from Claude Desktop, Cursor, Windsurf, and any MCP client.",
   "type": "module",
   "license": "MIT",
