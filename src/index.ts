@@ -25,9 +25,21 @@
  *   }
  */
 
+import { readFileSync } from "node:fs";
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+
+// Single source of truth for the server version: read it from package.json at
+// runtime so MCP serverInfo always matches the published package version — no
+// hard-coded literal to drift on each release. Resolved relative to THIS module
+// (like scripts/sync-version.mjs), so it's correct in dev (tsx src/index.ts), in
+// the built dist/index.js, and when installed from npm (dist/index.js →
+// ../package.json at the package root, which npm always ships).
+const { version: VERSION } = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+) as { version: string };
 
 const DEFAULT_API_BASE = "https://api.scribefy.app";
 
@@ -165,7 +177,7 @@ function explainApiError(status: number, body: ApiErrorBody): string {
 const server = new McpServer(
   {
     name: "scribefy-mcp",
-    version: "0.3.0",
+    version: VERSION,
   },
   {
     capabilities: {
