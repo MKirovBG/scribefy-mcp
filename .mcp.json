@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "scribefy": {
+      "command": "npx",
+      "args": ["-y", "scribefy-mcp"],
+      "env": {
+        "SCRIBEFY_API_KEY": "${SCRIBEFY_API_KEY}"
+      }
+    }
+  }
+}
