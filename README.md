@@ -132,6 +132,14 @@ YouTube's "Up next" feed for a video.
 
 `list_channel_videos` and `get_video_comments` were planned for 0.3.0 but are deferred to 0.4.0 while we wait for upstream `youtubei.js` to publish fixes for YouTube's 2026 response-shape changes. Channel listing fails with HTTP 400 at the InnerTube layer, and `info.getComments()` is no longer attached to parsed `VideoInfo`. Both will return as soon as the library catches up.
 
+## Skills
+
+The repo ships an Agent Skill (a `SKILL.md` your assistant loads on demand) that teaches it how to use these tools *well* — vet candidates with the free tools before spending credits, prefer authored captions, lean on the free transcript cache, and cite answers with timestamps.
+
+- [`skills/youtube-research`](skills/youtube-research/SKILL.md) — the YouTube research workflow: search → vet metadata → extract selectively → synthesize with `[mm:ss]` citations.
+
+To use it in Claude Code, copy the folder into your project's `.claude/skills/` (or `~/.claude/skills/` to have it everywhere). Open Plugins-compatible hosts detect it straight from the repo.
+
 ## Configuration
 
 | Env var | Required | Default | Notes |
